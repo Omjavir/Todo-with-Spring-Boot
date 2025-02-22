@@ -1,6 +1,9 @@
 package com.example.Todo.controller;
 
 import com.example.Todo.entity.TodoEntry;
+import com.example.Todo.service.TodoService;
+import org.bson.types.ObjectId;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.ArrayList;
@@ -12,31 +15,43 @@ import java.util.Map;
 @RequestMapping("/api/todo")
 public class TodoController {
 
-    private Map<Long, TodoEntry> todoEntries = new HashMap<>();
+    @Autowired
+    private TodoService todoService;
 
     @GetMapping
     public List<TodoEntry> getAllTodos(){
-        return new ArrayList<>(todoEntries.values());
+        return todoService.getAllTodos();
     }
 
     @GetMapping("/id/{id}")
-    public TodoEntry getTodoById(@PathVariable Long id){
-        return todoEntries.get(id);
+    public TodoEntry getTodoById(@PathVariable ObjectId id){
+        return todoService.getTodoById(id).orElse(null);
     }
 
     @PostMapping("/add")
-    public boolean addTodo(@RequestBody TodoEntry newTodo){
-        todoEntries.put(newTodo.getId(), newTodo);
-        return true;
+    public TodoEntry addTodo(@RequestBody TodoEntry newTodo){
+        todoService.addTodo(newTodo);
+        return newTodo;
     }
 
     @PutMapping("/id/{id}")
-    public TodoEntry updateTodoById(@PathVariable Long id, @RequestBody TodoEntry updatedTodo){
-        return todoEntries.put(id, updatedTodo);
+    public TodoEntry updateTodoById(@PathVariable ObjectId id, @RequestBody TodoEntry newTodo){
+
+        TodoEntry oldTodo = todoService.getTodoById(id).orElse(null);
+
+        if(oldTodo != null){
+            oldTodo.setTitle(newTodo.getTitle() != null && !newTodo.getTitle().equals("") ? newTodo.getTitle() : oldTodo.getTitle());
+
+            oldTodo.setDescription(newTodo.getDescription() != null && !newTodo.getDescription().equals("") ? newTodo.getDescription() : oldTodo.getDescription());
+        }
+
+        todoService.addTodo(oldTodo);
+        return oldTodo;
     }
 
     @DeleteMapping("/id/{id}")
-    public TodoEntry deleteTodoById(@PathVariable Long id){
-        return todoEntries.remove(id);
+    public boolean deleteTodoById(@PathVariable ObjectId id){
+        todoService.deleteTodo(id);
+        return true;
     }
 }
