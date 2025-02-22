@@ -4,6 +4,8 @@ import com.example.Todo.entity.TodoEntry;
 import com.example.Todo.service.TodoService;
 import org.bson.types.ObjectId;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.ArrayList;
@@ -19,8 +21,13 @@ public class TodoController {
     private TodoService todoService;
 
     @GetMapping
-    public List<TodoEntry> getAllTodos(){
-        return todoService.getAllTodos();
+    public ResponseEntity<?> getAllTodos(){
+      List<TodoEntry> todos = todoService.getAllTodos();
+      if(todos != null && !todos.isEmpty()){
+        return new ResponseEntity<>(todos, HttpStatus.OK);
+      }
+
+        return new ResponseEntity<>(HttpStatus.NOT_FOUND);
     }
 
     @GetMapping("/id/{id}")
@@ -29,9 +36,9 @@ public class TodoController {
     }
 
     @PostMapping("/add")
-    public TodoEntry addTodo(@RequestBody TodoEntry newTodo){
+    public ResponseEntity<TodoEntry> addTodo(@RequestBody TodoEntry newTodo){
         todoService.addTodo(newTodo);
-        return newTodo;
+        return new ResponseEntity<TodoEntry>(newTodo, HttpStatus.CREATED);
     }
 
     @PutMapping("/id/{id}")
